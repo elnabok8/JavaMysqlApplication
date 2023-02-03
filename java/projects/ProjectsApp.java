@@ -2,12 +2,14 @@ package projects;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Scanner;
 
 import projects.dao.DbConnection;
 import projects.entity.Project;
+import projects.entity.Step;
 import projects.exception.DbException;
 import projects.service.ProjectService;
 
@@ -15,15 +17,14 @@ import projects.service.ProjectService;
 public class ProjectsApp {
 	private ProjectService projectService = new ProjectService();
 	private Project curProject;
-	{
-	
-	}
 	
 	
 	private List<String> operations = List.of(
-			"1) add a project",
+			"1) Add a project",
 			"2) List projects",
-			"3) Select a project");
+			"3) Select a project",
+			"4) Modify Project",
+			"5) Delete Project");
 	//@formatter:on
 	
 	private Scanner scanner = new Scanner(System.in);
@@ -54,6 +55,12 @@ public class ProjectsApp {
 				case 3:  selectProject();
 				break;
 				
+				case 4: modifyProject();
+				break;
+				
+				case 5: deleteProject();
+				break;
+				
 				default:
 					System.out.println("\n" + selection + "is not a valid selection. Try again.");
 					break;
@@ -67,6 +74,42 @@ public class ProjectsApp {
 			}
 		
 		}}
+
+	private void deleteProject() {
+		listProjects();
+		Integer projectId = getIntInput("Enter the ID of the project to delete");
+		
+		if(Objects.nonNull(projectId)) {
+			projectService.deleteProject(projectId);
+			
+			if(Objects.nonNull(curProject) && curProject.getProjectId().equals(projectId)) {
+				curProject = null;
+			}
+		}
+		
+	}
+
+	private void modifyProject() throws SQLException {
+		if (Objects.isNull(curProject)) {
+			System.out.println("\nPlease select a project first.");
+			return;
+			}
+		List<Step> steps = projectService.fetchSteps(curProject.getProjectId());
+		System.out.println("\nSteps for current project");
+		steps.forEach(step -> System.out.println("   " + step));
+		
+		Integer stepId = getIntInput("Enter step ID of step to modify");
+		
+		if(Objects.nonNull(stepId)) {
+			String stepText = getStringInput("Enter new step text"); {
+				Step step = new Step();
+				step.setStepId(stepId);;
+				step.setStepText(stepText);
+				projectService.modifyStep(step);
+				curProject = projectService.fetchProjectById(curProject.getProjectId());
+			}
+		}
+	}
 
 	private void selectProject() {
 		listProjects();
@@ -83,10 +126,10 @@ public class ProjectsApp {
 	}
 
 	private void createProject() {
-		String projectName = getStringInput("Enter the project name:");
-		BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours:");
-		BigDecimal actualHours = getDecimalInput("Enter the actual hours:");
-		int difficulty = getIntInput("Enter the project difficulty (1-5):");
+		String projectName = getStringInput("Enter the project name");
+		BigDecimal estimatedHours = getDecimalInput("Enter the estimated hours");
+		BigDecimal actualHours = getDecimalInput("Enter the actual hours");
+		int difficulty = getIntInput("Enter the project difficulty (1-5)");
 		String notes = getStringInput("Enter the project notes:");
 		
 		Project project = new Project();
@@ -96,7 +139,7 @@ public class ProjectsApp {
 		project.setDifficulty(difficulty);
 		project.setNotes(notes);
 		
-		Project dbProject =projectService.addProject(project);
+		Project dbProject = projectService.addProject(project);
 		System.out.println("You have successfully created project :" + dbProject);
 		
 	}

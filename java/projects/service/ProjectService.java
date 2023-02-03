@@ -1,12 +1,14 @@
 package projects.service;
 
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import projects.dao.ProjectDao;
 import projects.entity.Project;
+import projects.entity.Step;
 import projects.exception.DbException;
 
 
@@ -26,6 +28,26 @@ return projectDao.insertProject(project);
 
 	public Project fetchProjectById(Integer projectID) {
 return projectDao.fetchProjectById(projectID).orElseThrow(() -> new NoSuchElementException("Project with project ID = " + projectID + " does not exist."));
+	}
+
+
+	public List<Step> fetchSteps(Integer projectId) throws SQLException {
+		return projectDao.fetchProjectSteps(projectId);
+	}
+
+
+	public void modifyStep(Step step) {
+if(!projectDao.modifyProjectStep(step)) {
+	throw new DbException("Step with ID = " + step.getStepId() + "does not exist.");
+}
+	}
+
+
+	public void deleteProject(Integer projectId) {
+		if(!projectDao.deleteProject(projectId)) {
+			throw new DbException("Project with ID = " + projectId + "does not exist.");
+		}
+		
 	}
 }
 
